@@ -23,7 +23,7 @@ const STATIC_ASSETS = [
 ];
 
 const API_HOSTS = [
-  "ezanvakti.emushaf.net",
+  "ezanvakti.imsakiyem.com",
   "api.aladhan.com"
 ];
 
