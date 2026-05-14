@@ -165,7 +165,7 @@
         <div class="label">Farz Namaz</div>
         <div class="name">Sabah Namazı</div>
         <div class="time" id="sabahTime">--:--</div>
-        <div class="desc">İmsâk vakti — Güneşin doğuşuna kadar</div>
+        <div class="desc">İmsâk vaktinden 40 dakika sonra başlar — Güneşin doğuşuna kadar</div>
       </div>
     </div>
 
@@ -381,35 +381,59 @@ const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","A
 const TR_DAYS   = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
 function formatDate(d) { return `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${TR_DAYS[d.getDay()]}`; }
 
-function findToday(timesList) {
-  const today = new Date(); today.setHours(0,0,0,0);
+/* Aktif geceyi seç:
+ *  - Eğer bugünün Sabah Namazı vaktinden (İmsâk + 40 dk) önceysek →
+ *    "dün akşam → bugün imsâk" aralığı geçerlidir.
+ *  - Aksi halde (gündüz / akşamüstü / gece başı) →
+ *    "bugün akşam → yarın imsâk" aralığı geçerlidir.
+ *
+ *  Dönen yapı: { aksamDay, imsakDay }
+ *    - aksamDay → Akşam vaktinin alınacağı gün (n. gün)
+ *    - imsakDay → İmsâk, Güneş ve diğer sabah vakitlerinin alınacağı gün (n+1. gün)
+ *
+ *  Gösterilen tarih daima imsakDay.date — yani "o sabah".
+ */
+function findActivePeriod(timesList) {
+  const todayMidnight = new Date(); todayMidnight.setHours(0,0,0,0);
+
+  let todayIdx = -1;
   for (let i = 0; i < timesList.length; i++) {
     const d = new Date(timesList[i].date); d.setHours(0,0,0,0);
-    if (d.getTime() === today.getTime()) {
-      return { todayIdx: i, today: timesList[i], tomorrow: timesList[i+1] || null };
-    }
+    if (d.getTime() === todayMidnight.getTime()) { todayIdx = i; break; }
   }
-  return null;
+  if (todayIdx < 0) return null;
+
+  const todayData = timesList[todayIdx];
+  const todayImsak = parseTime(todayData.imsak, todayData.date);
+  const todaySabah = new Date(todayImsak.getTime() + 40 * 60 * 1000);
+  const now = new Date();
+
+  if (now < todaySabah && todayIdx > 0) {
+    return { aksamDay: timesList[todayIdx - 1], imsakDay: todayData };
+  }
+  const next = timesList[todayIdx + 1];
+  if (next) return { aksamDay: todayData, imsakDay: next };
+  return { aksamDay: timesList[todayIdx - 1] || todayData, imsakDay: todayData };
 }
 
 function fmt(d) { return d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--:--"; }
 
-function calcDerived(today, tomorrow) {
-  const baseDate = today.date;
-  const yatsi = parseTime(today.yatsi, baseDate);
-  let fajrNight;
-  if (tomorrow) {
-    fajrNight = parseTime(tomorrow.imsak, tomorrow.date);
-  } else {
-    fajrNight = parseTime(today.imsak, new Date(baseDate.getTime() + 86400000));
-  }
-  const nightMs = fajrNight - yatsi;
-  let teheccud = null, seher = null;
-  if (nightMs > 0) {
-    teheccud = new Date(yatsi.getTime() + Math.floor((nightMs * 2) / 3));
-    seher    = new Date(fajrNight.getTime() - Math.floor(nightMs / 6));
-  }
-  return { teheccud, seher, sabah: parseTime(today.imsak, baseDate), fajrNight, yatsi };
+/* Babanın istediği formül:
+ *   gece = (ertesi gün) İmsâk - (önceki gün) Akşam
+ *   Seher    = İmsâk - gece/6
+ *   Teheccüd = İmsâk - gece/3
+ *   Sabah Namazı = İmsâk + 40 dakika
+ */
+function calcDerived(period) {
+  if (!period || !period.aksamDay || !period.imsakDay) return null;
+  const aksam = parseTime(period.aksamDay.aksam, period.aksamDay.date);
+  const imsak = parseTime(period.imsakDay.imsak, period.imsakDay.date);
+  const nightMs = imsak - aksam;
+  if (nightMs <= 0) return null;
+  const seher    = new Date(imsak.getTime() - Math.floor(nightMs / 6));
+  const teheccud = new Date(imsak.getTime() - Math.floor(nightMs / 3));
+  const sabah    = new Date(imsak.getTime() + 40 * 60 * 1000);
+  return { teheccud, seher, sabah, imsak, aksam };
 }
 
 async function loadAndRender() {
@@ -433,10 +457,10 @@ async function loadAndRender() {
     }
 
     state.times = times;
-    const slice = findToday(times);
-    if (!slice) throw new Error("Bugün için veri bulunamadı.");
+    const period = findActivePeriod(times);
+    if (!period) throw new Error("Bugün için veri bulunamadı.");
 
-    render(slice);
+    render(period);
     setStatus("");
     startCountdown();
   } catch (e) {
@@ -451,38 +475,42 @@ function setLoading(on) {
   document.querySelectorAll("#otherTimes .tm").forEach(el => el.classList.toggle("skeleton", on));
 }
 
-function render(slice) {
+function render(period) {
   setLoading(false);
-  const { today, tomorrow } = slice;
-  $("dateLabel").textContent = formatDate(today.date);
-  $("hijriLabel").textContent = today.hijri ? "Hicrî: " + today.hijri : "";
+  const { imsakDay } = period;
+  $("dateLabel").textContent = formatDate(imsakDay.date);
+  $("hijriLabel").textContent = imsakDay.hijri ? "Hicrî: " + imsakDay.hijri : "";
 
-  const d = calcDerived(today, tomorrow);
-  $("teheccudTime").textContent = fmt(d.teheccud);
-  $("seherTime").textContent    = fmt(d.seher);
-  $("sabahTime").textContent    = today.imsak;
+  const d = calcDerived(period);
+  if (d) {
+    $("teheccudTime").textContent = fmt(d.teheccud);
+    $("seherTime").textContent    = fmt(d.seher);
+    $("sabahTime").textContent    = fmt(d.sabah);
+  }
 
   document.querySelectorAll("#otherTimes .tm").forEach(el => {
     const k = el.dataset.key;
-    if (today[k]) el.textContent = today[k];
+    if (imsakDay[k]) el.textContent = imsakDay[k];
   });
 
-  highlightNext(slice);
+  highlightNext(period);
 }
 
-function getEvents(slice) {
-  const { today, tomorrow } = slice;
-  const d = calcDerived(today, tomorrow);
-  const ev = [];
-  if (d.teheccud) ev.push({ key: "teheccud", name: "Teheccüd Vakti", time: d.teheccud });
-  if (d.seher)    ev.push({ key: "seher",    name: "Seher Vakti",    time: d.seher });
-  ev.push({ key: "imsak",  name: "Sabah Namazı (İmsâk)", time: parseTime(today.imsak, today.date) });
-  ev.push({ key: "gunes",  name: "Güneş",  time: parseTime(today.gunes, today.date) });
-  ev.push({ key: "ogle",   name: "Öğle",   time: parseTime(today.ogle,  today.date) });
-  ev.push({ key: "ikindi", name: "İkindi", time: parseTime(today.ikindi, today.date) });
-  ev.push({ key: "aksam",  name: "Akşam",  time: parseTime(today.aksam, today.date) });
-  ev.push({ key: "yatsi",  name: "Yatsı",  time: parseTime(today.yatsi, today.date) });
-  return ev;
+function getEvents(period) {
+  const d = calcDerived(period);
+  if (!d) return [];
+  const { imsakDay } = period;
+  return [
+    { key: "teheccud", name: "Teheccüd Vakti", time: d.teheccud },
+    { key: "seher",    name: "Seher Vakti",    time: d.seher    },
+    { key: "imsak",    name: "İmsâk",          time: d.imsak    },
+    { key: "sabah",    name: "Sabah Namazı",   time: d.sabah    },
+    { key: "gunes",    name: "Güneş",          time: parseTime(imsakDay.gunes,  imsakDay.date) },
+    { key: "ogle",     name: "Öğle",           time: parseTime(imsakDay.ogle,   imsakDay.date) },
+    { key: "ikindi",   name: "İkindi",         time: parseTime(imsakDay.ikindi, imsakDay.date) },
+    { key: "aksam",    name: "Akşam",          time: parseTime(imsakDay.aksam,  imsakDay.date) },
+    { key: "yatsi",    name: "Yatsı",          time: parseTime(imsakDay.yatsi,  imsakDay.date) }
+  ];
 }
 
 function findNext(events) {
@@ -491,8 +519,8 @@ function findNext(events) {
   return null;
 }
 
-function highlightNext(slice) {
-  const next = findNext(getEvents(slice));
+function highlightNext(period) {
+  const next = findNext(getEvents(period));
   document.querySelectorAll("#otherTimes .item").forEach(el => el.classList.remove("next"));
   if (next) {
     const item = document.querySelector(`#otherTimes .tm[data-key="${next.key}"]`);
@@ -506,15 +534,23 @@ function startCountdown() {
   state.countdownTimer = setInterval(tickCountdown, 1000);
 }
 
+let lastRenderedImsakDate = null;
+
 function tickCountdown() {
   if (!state.times) return;
-  const slice = findToday(state.times);
-  if (!slice) return;
-  const events = getEvents(slice);
+  const period = findActivePeriod(state.times);
+  if (!period) return;
+
+  if (lastRenderedImsakDate !== period.imsakDay.date.getTime()) {
+    lastRenderedImsakDate = period.imsakDay.date.getTime();
+    render(period);
+  }
+
+  const events = getEvents(period);
   const next = findNext(events);
 
   if (!next) {
-    $("countdownTarget").textContent = "Yarının vakitleri için sayfa yenileniyor…";
+    $("countdownTarget").textContent = "Sonraki gece için yenileniyor…";
     $("countdownValue").textContent = "—";
     setTimeout(loadAndRender, 2000);
     return;
@@ -526,13 +562,13 @@ function tickCountdown() {
   $("countdownTarget").textContent = next.name + " — " + fmt(next.time);
   $("countdownValue").textContent = pad(h) + ":" + pad(m) + ":" + pad(s);
 
-  highlightNext(slice);
+  highlightNext(period);
 }
 
 setInterval(() => {
   if (!state.times) return;
-  const slice = findToday(state.times);
-  if (!slice) loadAndRender();
+  const period = findActivePeriod(state.times);
+  if (!period) loadAndRender();
 }, 60000);
 
 function useGeolocation() {
