@@ -257,45 +257,54 @@ function cacheSet(key, data) {
   try { localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
 }
 
-const DIYANET_BASE = "https://ezanvakti.emushaf.net";
+/* API: ezanvakti.imsakiyem.com — Diyanet İşleri Başkanlığı kaynaklı, açık veri
+ * Hiyerarşi: countries (2=Türkiye) → states → districts → prayer-times */
+const DIYANET_BASE = "https://ezanvakti.imsakiyem.com/api";
 
 async function fetchJSON(url) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("API hatası: " + res.status);
-  return res.json();
+  const json = await res.json();
+  if (json && typeof json === "object" && "data" in json) {
+    if (json.success === false) throw new Error(json.message || "API başarısız");
+    return json.data;
+  }
+  return json;
 }
 
 async function getIller() {
   const cached = cacheGet("iller");
   if (cached) return cached;
-  const data = await fetchJSON(`${DIYANET_BASE}/sehirler/2`);
-  data.sort((a, b) => a.SehirAdi.localeCompare(b.SehirAdi, "tr"));
-  cacheSet("iller", data);
-  return data;
+  const data = await fetchJSON(`${DIYANET_BASE}/locations/states?countryId=2`);
+  data.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
+  const normalized = data.map(s => ({ SehirID: s._id, SehirAdi: s.name }));
+  cacheSet("iller", normalized);
+  return normalized;
 }
 
 async function getIlceler(ilId) {
   const cached = cacheGet("ilceler." + ilId);
   if (cached) return cached;
-  const data = await fetchJSON(`${DIYANET_BASE}/ilceler/${ilId}`);
-  data.sort((a, b) => a.IlceAdi.localeCompare(b.IlceAdi, "tr"));
-  cacheSet("ilceler." + ilId, data);
-  return data;
+  const data = await fetchJSON(`${DIYANET_BASE}/locations/districts?stateId=${ilId}`);
+  data.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
+  const normalized = data.map(i => ({ IlceID: i._id, IlceAdi: i.name }));
+  cacheSet("ilceler." + ilId, normalized);
+  return normalized;
 }
 
 async function getVakitlerDiyanet(ilceId) {
-  const data = await fetchJSON(`${DIYANET_BASE}/vakitler/${ilceId}`);
+  const data = await fetchJSON(`${DIYANET_BASE}/prayer-times/${ilceId}/monthly`);
   return data.map(d => {
-    const [dd, mm, yyyy] = d.MiladiTarihKisa.split(".").map(Number);
+    const iso = new Date(d.date);
     return {
-      date: new Date(yyyy, mm - 1, dd),
-      imsak: d.Imsak,
-      gunes: d.Gunes,
-      ogle:  d.Ogle,
-      ikindi: d.Ikindi,
-      aksam: d.Aksam,
-      yatsi: d.Yatsi,
-      hijri: d.HicriTarihUzun
+      date: new Date(iso.getFullYear(), iso.getMonth(), iso.getDate()),
+      imsak: d.times.imsak,
+      gunes: d.times.gunes,
+      ogle:  d.times.ogle,
+      ikindi: d.times.ikindi,
+      aksam: d.times.aksam,
+      yatsi: d.times.yatsi,
+      hijri: d.hijri_date && d.hijri_date.full_date
     };
   });
 }
