@@ -165,7 +165,7 @@
         <div class="label">Farz Namaz</div>
         <div class="name">Sabah Namazı</div>
         <div class="time" id="sabahTime">--:--</div>
-        <div class="desc">İmsâk vaktinden 40 dakika sonra başlar — Güneşin doğuşuna kadar</div>
+        <div class="desc">Güneşin doğuşundan 40 dakika önce başlar — Güneşin doğuşuna kadar</div>
       </div>
     </div>
 
@@ -431,18 +431,19 @@ function fmt(d) { return d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--
  *   gece = (ertesi gün) İmsâk - (önceki gün) Akşam
  *   Seher    = İmsâk - gece/6
  *   Teheccüd = İmsâk - gece/3
- *   Sabah Namazı = İmsâk + 40 dakika
+ *   Sabah Namazı = Güneş doğuşu - 40 dakika
  */
 function calcDerived(period) {
   if (!period || !period.aksamDay || !period.imsakDay) return null;
   const aksam = parseTime(period.aksamDay.aksam, period.aksamDay.date);
   const imsak = parseTime(period.imsakDay.imsak, period.imsakDay.date);
+  const gunes = parseTime(period.imsakDay.gunes, period.imsakDay.date);
   const nightMs = imsak - aksam;
   if (nightMs <= 0) return null;
   const seher    = new Date(imsak.getTime() - Math.floor(nightMs / 6));
   const teheccud = new Date(imsak.getTime() - Math.floor(nightMs / 3));
-  const sabah    = new Date(imsak.getTime() + 40 * 60 * 1000);
-  return { teheccud, seher, sabah, imsak, aksam };
+  const sabah    = new Date(gunes.getTime() - 40 * 60 * 1000);
+  return { teheccud, seher, sabah, imsak, aksam, gunes };
 }
 
 async function loadAndRender() {
