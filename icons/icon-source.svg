@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#1d2a5a"/>
+      <stop offset="55%" stop-color="#131a36"/>
+      <stop offset="100%" stop-color="#0b1020"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0d999"/>
+      <stop offset="55%" stop-color="#c9a45a"/>
+      <stop offset="100%" stop-color="#a68043"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Star (rotated to upper-right) -->
+  <g transform="translate(330 175)" filter="url(#glow)">
+    <polygon points="0,-44 11,-14 42,-14 17,4 27,34 0,16 -27,34 -17,4 -42,-14 -11,-14"
+             fill="url(#gold)"/>
+  </g>
+
+  <!-- Crescent (centered, slightly left) -->
+  <g transform="translate(225 270)" filter="url(#glow)">
+    <path d="M 0,-120 A 120,120 0 1,0 0,120 A 96,96 0 1,1 0,-120 Z" fill="url(#gold)"/>
+  </g>
+</svg>

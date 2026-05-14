@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Teheccüd · Seher · Sabah Namazı Vakitleri</title>
+
+<meta name="description" content="Diyanet İşleri Başkanlığı verilerine dayalı Teheccüd, Seher ve Sabah Namazı vakitleri.">
+<meta name="theme-color" content="#0b1020">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vakit">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-180.png">
+<style>
+  :root {
+    --bg-1: #0b1020;
+    --bg-2: #131a36;
+    --accent: #c9a45a;
+    --accent-soft: #f0d999;
+    --text: #f4f5fb;
+    --muted: #9aa3c4;
+    --card: rgba(255, 255, 255, 0.04);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --highlight: rgba(201, 164, 90, 0.12);
+    --highlight-border: rgba(201, 164, 90, 0.45);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    min-height: 100%;
+    background:
+      radial-gradient(1200px 800px at 80% -10%, #1d2a5a 0%, transparent 60%),
+      radial-gradient(800px 600px at -10% 110%, #2a1d4a 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-1) 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body { padding: 32px 20px 64px; display: flex; justify-content: center; }
+  .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 22px; }
+
+  header { text-align: center; padding: 8px 8px 0; }
+  header .crest { font-size: 28px; letter-spacing: 8px; color: var(--accent); margin-bottom: 10px; }
+  header h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: 0.3px; margin-bottom: 6px; }
+  header .sub { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+  .controls {
+    display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
+    padding: 12px 14px; background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 14px; backdrop-filter: blur(6px);
+  }
+  .controls label { font-size: 13px; color: var(--muted); }
+  .controls select, .controls button {
+    appearance: none; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
+    color: var(--text); padding: 8px 14px; border-radius: 10px; font-size: 14px; cursor: pointer;
+    transition: all 0.2s ease; min-width: 140px;
+  }
+  .controls select:hover, .controls button:hover { background: rgba(255,255,255,0.10); border-color: rgba(201, 164, 90, 0.4); }
+  .controls select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .controls button.locate {
+    background: linear-gradient(135deg, rgba(201, 164, 90, 0.18), rgba(201, 164, 90, 0.08));
+    border-color: rgba(201, 164, 90, 0.4); color: var(--accent-soft); min-width: auto;
+  }
+
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 14px; font-size: 14px; flex-wrap: wrap; gap: 12px;
+  }
+  .date-bar .left { color: var(--accent-soft); font-weight: 500; }
+  .date-bar .hijri { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .date-bar .right { color: var(--muted); text-align: right; }
+
+  .featured { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 680px) { .featured { grid-template-columns: 1fr; } }
+
+  .vakit-card {
+    background: var(--highlight); border: 1px solid var(--highlight-border);
+    border-radius: 18px; padding: 22px 20px; position: relative; overflow: hidden;
+  }
+  .vakit-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(400px 200px at 90% 0%, rgba(201, 164, 90, 0.15), transparent 60%);
+    pointer-events: none;
+  }
+  .vakit-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 2.5px; color: var(--accent); margin-bottom: 6px; font-weight: 600; }
+  .vakit-card .name { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+  .vakit-card .time { font-size: 38px; font-weight: 700; color: var(--accent-soft); font-variant-numeric: tabular-nums; letter-spacing: 1px; margin-bottom: 4px; }
+  .vakit-card .desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .secondary {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+    padding: 14px; background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+  }
+  @media (max-width: 680px) { .secondary { grid-template-columns: repeat(3, 1fr); } }
+  .secondary .item { text-align: center; padding: 10px 6px; border-radius: 10px; transition: background 0.2s ease; }
+  .secondary .item.next { background: rgba(201, 164, 90, 0.10); border: 1px solid rgba(201, 164, 90, 0.3); }
+  .secondary .item .nm { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .secondary .item .tm { font-size: 18px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .countdown { text-align: center; padding: 18px; background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; }
+  .countdown .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+  .countdown .target { font-size: 15px; color: var(--accent-soft); margin-bottom: 8px; font-weight: 500; }
+  .countdown .val { font-size: 32px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: 2px; }
+
+  .status { text-align: center; padding: 12px; color: var(--muted); font-size: 13px; }
+  .status.error { color: #ffb4b4; background: rgba(255, 100, 100, 0.08); border: 1px solid rgba(255, 100, 100, 0.25); border-radius: 10px; }
+  .status.hidden { display: none; }
+
+  .footer { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 12px 0; line-height: 1.6; }
+  .footer strong { color: var(--accent-soft); font-weight: 500; }
+
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+    background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; color: transparent !important;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="crest">۞ ۞ ۞</div>
+      <h1>Teheccüd · Seher · Sabah Namazı Vakitleri</h1>
+      <div class="sub">Diyanet İşleri Başkanlığı verisi · Her açılışta otomatik güncellenir</div>
+    </header>
+
+    <div class="controls">
+      <label for="ilSel">İl:</label>
+      <select id="ilSel" aria-label="İl seçimi"><option>Yükleniyor…</option></select>
+      <label for="ilceSel">İlçe:</label>
+      <select id="ilceSel" aria-label="İlçe seçimi" disabled><option>—</option></select>
+      <button class="locate" id="locateBtn" title="Konumumu kullan">📍 Konumum</button>
+    </div>
+
+    <div class="date-bar">
+      <div>
+        <div class="left" id="dateLabel">—</div>
+        <div class="hijri" id="hijriLabel"></div>
+      </div>
+      <div class="right" id="cityLabel">—</div>
+    </div>
+
+    <div class="featured">
+      <div class="vakit-card">
+        <div class="label">Gece İbadeti</div>
+        <div class="name">Teheccüd Vakti</div>
+        <div class="time" id="teheccudTime">--:--</div>
+        <div class="desc">Gecenin son üçte birinden Sabah Namazına kadar</div>
+      </div>
+      <div class="vakit-card">
+        <div class="label">Bereket Vakti</div>
+        <div class="name">Seher Vakti</div>
+        <div class="time" id="seherTime">--:--</div>
+        <div class="desc">İmsâktan önceki son zaman dilimi (gecenin son altıda biri)</div>
+      </div>
+      <div class="vakit-card">
+        <div class="label">Farz Namaz</div>
+        <div class="name">Sabah Namazı</div>
+        <div class="time" id="sabahTime">--:--</div>
+        <div class="desc">İmsâk vakti — Güneşin doğuşuna kadar</div>
+      </div>
+    </div>
+
+    <div class="countdown">
+      <div class="lbl">Sıradaki Vakte Kalan Süre</div>
+      <div class="target" id="countdownTarget">—</div>
+      <div class="val" id="countdownValue">--:--:--</div>
+    </div>
+
+    <div class="secondary" id="otherTimes">
+      <div class="item"><div class="nm">İmsâk</div><div class="tm" data-key="imsak">--:--</div></div>
+      <div class="item"><div class="nm">Güneş</div><div class="tm" data-key="gunes">--:--</div></div>
+      <div class="item"><div class="nm">Öğle</div><div class="tm" data-key="ogle">--:--</div></div>
+      <div class="item"><div class="nm">İkindi</div><div class="tm" data-key="ikindi">--:--</div></div>
+      <div class="item"><div class="nm">Akşam</div><div class="tm" data-key="aksam">--:--</div></div>
+      <div class="item"><div class="nm">Yatsı</div><div class="tm" data-key="yatsi">--:--</div></div>
+    </div>
+
+    <div class="status" id="status">Hazırlanıyor…</div>
+
+    <div class="footer">
+      Veri kaynağı: <strong>Diyanet İşleri Başkanlığı</strong> (ezanvakti.emushaf.net üzerinden).
+      Konum servisi kullanıldığında <strong>Aladhan API (Diyanet hesaplama yöntemi)</strong> yedeği devreye girer.
+    </div>
+  </div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "teheccud-seher.location.v2";
+const CACHE_PREFIX = "teheccud-seher.cache.";
+
+const $ = (id) => document.getElementById(id);
+const statusEl = $("status");
+
+let state = {
+  location: null,
+  times: null,
+  countdownTimer: null
+};
+
+function setStatus(msg, isError) {
+  statusEl.textContent = msg || "";
+  statusEl.classList.toggle("error", !!isError);
+  statusEl.classList.toggle("hidden", !msg);
+}
+
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+function clearChildren(node) {
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
+
+function makeOption(value, label, dataAd, opts) {
+  const o = document.createElement("option");
+  o.value = value;
+  o.textContent = label;
+  if (dataAd !== undefined) o.dataset.ad = dataAd;
+  if (opts) {
+    if (opts.disabled) o.disabled = true;
+    if (opts.selected) o.selected = true;
+  }
+  return o;
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+
+function saveLocation(loc) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(loc)); } catch (e) {}
+}
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (Date.now() - obj.ts > 7 * 86400 * 1000) return null;
+    return obj.data;
+  } catch (e) { return null; }
+}
+
+function cacheSet(key, data) {
+  try { localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), data })); } catch (e) {}
+}
+
+const DIYANET_BASE = "https://ezanvakti.emushaf.net";
+
+async function fetchJSON(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("API hatası: " + res.status);
+  return res.json();
+}
+
+async function getIller() {
+  const cached = cacheGet("iller");
+  if (cached) return cached;
+  const data = await fetchJSON(`${DIYANET_BASE}/sehirler/2`);
+  data.sort((a, b) => a.SehirAdi.localeCompare(b.SehirAdi, "tr"));
+  cacheSet("iller", data);
+  return data;
+}
+
+async function getIlceler(ilId) {
+  const cached = cacheGet("ilceler." + ilId);
+  if (cached) return cached;
+  const data = await fetchJSON(`${DIYANET_BASE}/ilceler/${ilId}`);
+  data.sort((a, b) => a.IlceAdi.localeCompare(b.IlceAdi, "tr"));
+  cacheSet("ilceler." + ilId, data);
+  return data;
+}
+
+async function getVakitlerDiyanet(ilceId) {
+  const data = await fetchJSON(`${DIYANET_BASE}/vakitler/${ilceId}`);
+  return data.map(d => {
+    const [dd, mm, yyyy] = d.MiladiTarihKisa.split(".").map(Number);
+    return {
+      date: new Date(yyyy, mm - 1, dd),
+      imsak: d.Imsak,
+      gunes: d.Gunes,
+      ogle:  d.Ogle,
+      ikindi: d.Ikindi,
+      aksam: d.Aksam,
+      yatsi: d.Yatsi,
+      hijri: d.HicriTarihUzun
+    };
+  });
+}
+
+async function getVakitlerGPS(lat, lng) {
+  const now = new Date();
+  const results = [];
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(now.getTime() + i * 86400000);
+    const url = `https://api.aladhan.com/v1/timings/${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}?latitude=${lat}&longitude=${lng}&method=13`;
+    const json = await fetchJSON(url);
+    const t = json.data.timings;
+    const clean = (s) => (s || "").split(" ")[0];
+    const h = json.data.date && json.data.date.hijri;
+    results.push({
+      date: d,
+      imsak: clean(t.Imsak),
+      gunes: clean(t.Sunrise),
+      ogle:  clean(t.Dhuhr),
+      ikindi: clean(t.Asr),
+      aksam: clean(t.Maghrib),
+      yatsi: clean(t.Isha),
+      hijri: h ? `${h.day} ${h.month && h.month.en ? h.month.en : ''} ${h.year}` : ""
+    });
+  }
+  return results;
+}
+
+function toTitle(s) {
+  if (!s) return s;
+  return s.toLocaleLowerCase("tr").replace(/(^|[ \-'])([a-zçğıöşüâî])/gu, (_, p1, p2) => p1 + p2.toLocaleUpperCase("tr"));
+}
+
+async function populateIller() {
+  const sel = $("ilSel");
+  clearChildren(sel);
+  try {
+    const iller = await getIller();
+    sel.appendChild(makeOption("", "İl seçin…", undefined, { disabled: true, selected: true }));
+    for (const il of iller) {
+      sel.appendChild(makeOption(il.SehirID, toTitle(il.SehirAdi), il.SehirAdi));
+    }
+    sel.disabled = false;
+  } catch (e) {
+    console.error(e);
+    setStatus("İl listesi alınamadı. İnternet bağlantınızı kontrol edin.", true);
+  }
+}
+
+async function populateIlceler(ilId, preselectIlceId) {
+  const sel = $("ilceSel");
+  sel.disabled = true;
+  clearChildren(sel);
+  sel.appendChild(makeOption("", "Yükleniyor…", undefined, { disabled: true, selected: true }));
+  try {
+    const ilceler = await getIlceler(ilId);
+    clearChildren(sel);
+    const def = makeOption("", "İlçe seçin…", undefined, { disabled: true });
+    sel.appendChild(def);
+    for (const i of ilceler) {
+      sel.appendChild(makeOption(i.IlceID, toTitle(i.IlceAdi), i.IlceAdi));
+    }
+    if (preselectIlceId) {
+      sel.value = preselectIlceId;
+    } else {
+      def.selected = true;
+    }
+    sel.disabled = false;
+  } catch (e) {
+    console.error(e);
+    setStatus("İlçe listesi alınamadı.", true);
+  }
+}
+
+function parseTime(hhmm, baseDate) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date(baseDate);
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+const TR_MONTHS = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const TR_DAYS   = ["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+function formatDate(d) { return `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${d.getFullYear()}, ${TR_DAYS[d.getDay()]}`; }
+
+function findToday(timesList) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < timesList.length; i++) {
+    const d = new Date(timesList[i].date); d.setHours(0,0,0,0);
+    if (d.getTime() === today.getTime()) {
+      return { todayIdx: i, today: timesList[i], tomorrow: timesList[i+1] || null };
+    }
+  }
+  return null;
+}
+
+function fmt(d) { return d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--:--"; }
+
+function calcDerived(today, tomorrow) {
+  const baseDate = today.date;
+  const yatsi = parseTime(today.yatsi, baseDate);
+  let fajrNight;
+  if (tomorrow) {
+    fajrNight = parseTime(tomorrow.imsak, tomorrow.date);
+  } else {
+    fajrNight = parseTime(today.imsak, new Date(baseDate.getTime() + 86400000));
+  }
+  const nightMs = fajrNight - yatsi;
+  let teheccud = null, seher = null;
+  if (nightMs > 0) {
+    teheccud = new Date(yatsi.getTime() + Math.floor((nightMs * 2) / 3));
+    seher    = new Date(fajrNight.getTime() - Math.floor(nightMs / 6));
+  }
+  return { teheccud, seher, sabah: parseTime(today.imsak, baseDate), fajrNight, yatsi };
+}
+
+async function loadAndRender() {
+  if (!state.location) { setStatus("Lütfen il ve ilçe seçin."); return; }
+  if (state.location.kind === "diyanet" && !state.location.ilceId) {
+    setStatus("Lütfen ilçe seçin.");
+    return;
+  }
+
+  setLoading(true);
+  setStatus("Vakitler çekiliyor…");
+
+  try {
+    let times;
+    if (state.location.kind === "diyanet") {
+      times = await getVakitlerDiyanet(state.location.ilceId);
+      $("cityLabel").textContent = `${toTitle(state.location.ilceAd)} / ${toTitle(state.location.ilAd)}`;
+    } else {
+      times = await getVakitlerGPS(state.location.lat, state.location.lng);
+      $("cityLabel").textContent = state.location.name || "Konumum";
+    }
+
+    state.times = times;
+    const slice = findToday(times);
+    if (!slice) throw new Error("Bugün için veri bulunamadı.");
+
+    render(slice);
+    setStatus("");
+    startCountdown();
+  } catch (e) {
+    console.error(e);
+    setStatus("Vakitler alınamadı: " + (e.message || e), true);
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  ["teheccudTime","seherTime","sabahTime"].forEach(id => $(id).classList.toggle("skeleton", on));
+  document.querySelectorAll("#otherTimes .tm").forEach(el => el.classList.toggle("skeleton", on));
+}
+
+function render(slice) {
+  setLoading(false);
+  const { today, tomorrow } = slice;
+  $("dateLabel").textContent = formatDate(today.date);
+  $("hijriLabel").textContent = today.hijri ? "Hicrî: " + today.hijri : "";
+
+  const d = calcDerived(today, tomorrow);
+  $("teheccudTime").textContent = fmt(d.teheccud);
+  $("seherTime").textContent    = fmt(d.seher);
+  $("sabahTime").textContent    = today.imsak;
+
+  document.querySelectorAll("#otherTimes .tm").forEach(el => {
+    const k = el.dataset.key;
+    if (today[k]) el.textContent = today[k];
+  });
+
+  highlightNext(slice);
+}
+
+function getEvents(slice) {
+  const { today, tomorrow } = slice;
+  const d = calcDerived(today, tomorrow);
+  const ev = [];
+  if (d.teheccud) ev.push({ key: "teheccud", name: "Teheccüd Vakti", time: d.teheccud });
+  if (d.seher)    ev.push({ key: "seher",    name: "Seher Vakti",    time: d.seher });
+  ev.push({ key: "imsak",  name: "Sabah Namazı (İmsâk)", time: parseTime(today.imsak, today.date) });
+  ev.push({ key: "gunes",  name: "Güneş",  time: parseTime(today.gunes, today.date) });
+  ev.push({ key: "ogle",   name: "Öğle",   time: parseTime(today.ogle,  today.date) });
+  ev.push({ key: "ikindi", name: "İkindi", time: parseTime(today.ikindi, today.date) });
+  ev.push({ key: "aksam",  name: "Akşam",  time: parseTime(today.aksam, today.date) });
+  ev.push({ key: "yatsi",  name: "Yatsı",  time: parseTime(today.yatsi, today.date) });
+  return ev;
+}
+
+function findNext(events) {
+  const now = new Date();
+  for (const e of events) if (e.time > now) return e;
+  return null;
+}
+
+function highlightNext(slice) {
+  const next = findNext(getEvents(slice));
+  document.querySelectorAll("#otherTimes .item").forEach(el => el.classList.remove("next"));
+  if (next) {
+    const item = document.querySelector(`#otherTimes .tm[data-key="${next.key}"]`);
+    if (item) item.parentElement.classList.add("next");
+  }
+}
+
+function startCountdown() {
+  if (state.countdownTimer) clearInterval(state.countdownTimer);
+  tickCountdown();
+  state.countdownTimer = setInterval(tickCountdown, 1000);
+}
+
+function tickCountdown() {
+  if (!state.times) return;
+  const slice = findToday(state.times);
+  if (!slice) return;
+  const events = getEvents(slice);
+  const next = findNext(events);
+
+  if (!next) {
+    $("countdownTarget").textContent = "Yarının vakitleri için sayfa yenileniyor…";
+    $("countdownValue").textContent = "—";
+    setTimeout(loadAndRender, 2000);
+    return;
+  }
+  const diff = next.time - new Date();
+  if (diff <= 0) { setTimeout(tickCountdown, 500); return; }
+  const sec = Math.floor(diff / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  $("countdownTarget").textContent = next.name + " — " + fmt(next.time);
+  $("countdownValue").textContent = pad(h) + ":" + pad(m) + ":" + pad(s);
+
+  highlightNext(slice);
+}
+
+setInterval(() => {
+  if (!state.times) return;
+  const slice = findToday(state.times);
+  if (!slice) loadAndRender();
+}, 60000);
+
+function useGeolocation() {
+  if (!navigator.geolocation) { setStatus("Tarayıcınız konum servisini desteklemiyor.", true); return; }
+  setStatus("Konum alınıyor…");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      state.location = {
+        kind: "gps",
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        name: "Konumum (GPS)"
+      };
+      saveLocation(state.location);
+      loadAndRender();
+    },
+    () => { setStatus("Konum alınamadı. Lütfen il/ilçe seçin.", true); },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+  );
+}
+
+async function init() {
+  $("ilSel").addEventListener("change", onIlChange);
+  $("ilceSel").addEventListener("change", onIlceChange);
+  $("locateBtn").addEventListener("click", useGeolocation);
+
+  await populateIller();
+
+  const saved = loadSaved();
+  if (saved && saved.kind === "diyanet" && saved.ilId) {
+    state.location = saved;
+    $("ilSel").value = saved.ilId;
+    await populateIlceler(saved.ilId, saved.ilceId);
+    if (saved.ilceId) await loadAndRender();
+  } else if (saved && saved.kind === "gps") {
+    state.location = saved;
+    await loadAndRender();
+  } else {
+    setStatus("İl ve ilçe seçerek başlayın. Bu seçim hatırlanacaktır.");
+  }
+}
+
+async function onIlChange(e) {
+  const sel = e.target;
+  const ilId = sel.value;
+  if (!ilId) return;
+  const ilAd = sel.options[sel.selectedIndex].dataset.ad;
+  state.location = { kind: "diyanet", ilId, ilAd, ilceId: null, ilceAd: null };
+  await populateIlceler(ilId);
+}
+
+async function onIlceChange(e) {
+  const sel = e.target;
+  const ilceId = sel.value;
+  if (!ilceId) return;
+  const ilceAd = sel.options[sel.selectedIndex].dataset.ad;
+  if (!state.location || state.location.kind !== "diyanet") return;
+  state.location.ilceId = ilceId;
+  state.location.ilceAd = ilceAd;
+  saveLocation(state.location);
+  await loadAndRender();
+}
+
+init();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js")
+      .catch((err) => console.warn("Service worker kaydı başarısız:", err));
+  });
+}
+</script>
+</body>
+</html>
