@@ -2,12 +2,12 @@
  *
  * Strateji:
  *  - Statik kabuk (HTML/CSS/JS/icon/manifest): cache-first
- *  - Diyanet/Aladhan API çağrıları: stale-while-revalidate
+ *  - Diyanet API çağrıları: stale-while-revalidate
  *    (önce cache'den göster, arka planda taze veri çek; offline'da en son
  *     başarılı yanıt gösterilir)
  */
 
-const VERSION = "v1.3.0";
+const VERSION = "v1.4.0";
 const STATIC_CACHE  = `vakit-static-${VERSION}`;
 const RUNTIME_CACHE = `vakit-runtime-${VERSION}`;
 
@@ -23,8 +23,7 @@ const STATIC_ASSETS = [
 ];
 
 const API_HOSTS = [
-  "ezanvakti.imsakiyem.com",
-  "api.aladhan.com"
+  "ezanvakti.imsakiyem.com"
 ];
 
 self.addEventListener("install", (event) => {
