@@ -33,23 +33,74 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    min-height: 100%;
-    background:
-      radial-gradient(1200px 800px at 80% -10%, #1d2a5a 0%, transparent 60%),
-      radial-gradient(800px 600px at -10% 110%, #2a1d4a 0%, transparent 60%),
-      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-1) 100%);
+    min-height: 100vh;
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-
-  body { padding: 32px 20px 64px; display: flex; justify-content: center; }
+  /* Tek body background: alttan üste — overlay, resim, fallback renk
+     Multiple background layers (CSS shorthand) — pseudo element gerek yok */
+  body {
+    background:
+      linear-gradient(180deg, rgba(10, 8, 24, 0.40) 0%, rgba(10, 8, 24, 0.65) 100%),
+      url('./assets/bg-kabe.jpg') center center / cover no-repeat fixed,
+      #0a0818;
+    padding: 32px 20px 64px;
+    display: flex;
+    justify-content: center;
+  }
+  html { background-color: #0a0818; }
   .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 22px; }
 
+  @font-face {
+    font-family: 'Amiri';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('./assets/fonts/amiri-regular.ttf') format('truetype');
+  }
+
   header { text-align: center; padding: 8px 8px 0; }
-  header .crest { font-size: 28px; letter-spacing: 8px; color: var(--accent); margin-bottom: 10px; }
-  header h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: 0.3px; margin-bottom: 6px; }
-  header .sub { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  header .sehadet {
+    font-family: 'Amiri', "Times New Roman", serif;
+    font-size: clamp(28px, 5vw, 44px);
+    line-height: 1.5;
+    color: var(--accent-soft);
+    direction: rtl;
+    text-align: center;
+    margin: 6px 0 8px;
+    text-shadow: 0 2px 8px rgba(201, 164, 90, 0.25);
+    letter-spacing: 0;
+  }
+
+  header .deco-banner {
+    display: flex; align-items: center; gap: 14px;
+    margin: 12px auto 14px;
+    max-width: 360px;
+    padding: 0 8px;
+  }
+  header .deco-banner img {
+    width: 72px; height: 72px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1.5px solid rgba(201, 164, 90, 0.55);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+  header .deco-banner .deco-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    position: relative;
+  }
+  header .deco-banner .deco-line::after {
+    content: "✦";
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent); font-size: 16px;
+    background: var(--bg-1); padding: 0 8px;
+  }
+  @media (max-width: 380px) {
+    header .deco-banner img { width: 60px; height: 60px; }
+  }
 
   .controls {
     display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
@@ -123,9 +174,12 @@
 <body>
   <div class="container">
     <header>
-      <div class="crest">۞ ۞ ۞</div>
-      <h1>Teheccüd · Seher · Sabah Namazı Vakitleri</h1>
-      <div class="sub">Diyanet İşleri Başkanlığı verisi · Her açılışta otomatik güncellenir</div>
+      <div class="sehadet" lang="ar" aria-label="Kelime-i Şehadet">لَا إِلَٰهَ إِلَّا ٱللَّٰهُ مُحَمَّدٌ رَسُولُ ٱللَّٰهِ</div>
+      <div class="deco-banner" aria-hidden="true">
+        <img src="./assets/mescid.jpg" alt="Mescid-i Nebevî" loading="eager" decoding="async">
+        <div class="deco-line"></div>
+        <img src="./assets/kabe.jpg" alt="Kâbe-i Muazzama" loading="eager" decoding="async">
+      </div>
     </header>
 
     <div class="controls">
