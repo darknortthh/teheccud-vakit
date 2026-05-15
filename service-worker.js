@@ -7,7 +7,7 @@
  *     başarılı yanıt gösterilir)
  */
 
-const VERSION = "v1.7.1";
+const VERSION = "v1.8.2";
 const STATIC_CACHE  = `vakit-static-${VERSION}`;
 const RUNTIME_CACHE = `vakit-runtime-${VERSION}`;
 
@@ -23,7 +23,7 @@ const STATIC_ASSETS = [
   "./assets/mescid.jpg",
   "./assets/kabe.jpg",
   "./assets/fonts/amiri-regular.ttf",
-  "./assets/bg-gece.svg"
+  "./assets/bg-kabe.jpg"
 ];
 
 const API_HOSTS = [
