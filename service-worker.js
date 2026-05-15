@@ -7,7 +7,7 @@
  *     başarılı yanıt gösterilir)
  */
 
-const VERSION = "v1.4.0";
+const VERSION = "v1.7.1";
 const STATIC_CACHE  = `vakit-static-${VERSION}`;
 const RUNTIME_CACHE = `vakit-runtime-${VERSION}`;
 
@@ -19,7 +19,11 @@ const STATIC_ASSETS = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon-180.png",
-  "./icons/favicon-32.png"
+  "./icons/favicon-32.png",
+  "./assets/mescid.jpg",
+  "./assets/kabe.jpg",
+  "./assets/fonts/amiri-regular.ttf",
+  "./assets/bg-gece.svg"
 ];
 
 const API_HOSTS = [
