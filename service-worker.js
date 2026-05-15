@@ -7,7 +7,7 @@
  *     başarılı yanıt gösterilir)
  */
 
-const VERSION = "v1.8.2";
+const VERSION = "v1.8.3";
 const STATIC_CACHE  = `vakit-static-${VERSION}`;
 const RUNTIME_CACHE = `vakit-runtime-${VERSION}`;
 
