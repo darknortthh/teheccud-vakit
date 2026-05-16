@@ -46,11 +46,6 @@
   body { padding: 32px 20px 64px; display: flex; justify-content: center; }
   .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 22px; }
 
-  header { text-align: center; padding: 8px 8px 0; }
-  header .crest { font-size: 28px; letter-spacing: 8px; color: var(--accent); margin-bottom: 10px; }
-  header h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 600; letter-spacing: 0.3px; margin-bottom: 6px; }
-  header .sub { color: var(--muted); font-size: 13px; line-height: 1.5; }
-
   .controls {
     display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;
     padding: 12px 14px; background: var(--card); border: 1px solid var(--card-border);
@@ -130,12 +125,6 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <div class="crest">۞ ۞ ۞</div>
-      <h1>Teheccüd · Seher · Sabah Namazı Vakitleri</h1>
-      <div class="sub">Diyanet İşleri Başkanlığı verisi · Her açılışta otomatik güncellenir</div>
-    </header>
-
     <div class="controls">
       <label for="ilSel">İl:</label>
       <select id="ilSel" aria-label="İl seçimi"><option>Yükleniyor…</option></select>
